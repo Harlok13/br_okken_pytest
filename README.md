@@ -585,4 +585,31 @@ def test_start_tasks_db_raises():
 об исключении и имеет тип `ExceptionInfo`.
 
 ## Marking Test Functions
+Чтобы выполнить тесты, помеченные маркерами, нужно ввести `-m marker_name`
+Выражение после `-m` может использовать `and`, `or` и `not` комбинировать
+несколько маркеров:
+```
+(venv33) ...\bopytest-code\code\ch2\tasks_proj\tests\func>pytest -v -m "smoke and get" test_api_exceptions.py
+============================= test session starts =============================
 
+collected 7 items
+
+test_api_exceptions.py::test_get_raises PASSED
+
+============================= 6 tests deselected ==============================
+=================== 1 passed, 6 deselected in 0.13 seconds ====================
+```
+Мы можем использовать и not:
+```
+(venv33) ...\bopytest-code\code\ch2\tasks_proj\tests\func>pytest -v -m "smoke and not get" test_api_exceptions.py
+============================= test session starts =============================
+
+collected 7 items
+
+test_api_exceptions.py::test_list_raises PASSED
+
+============================= 6 tests deselected ==============================
+=================== 1 passed, 6 deselected in 0.13 seconds ====================
+```
+Добавление `-m 'smoke and not get'` выбрало тест, который был отмечен с
+помощью `@pytest.mark.smoke`, но не `@pytest.mark.get`

@@ -3,10 +3,12 @@
 import pytest
 import tasks
 
+
 def test_add_raises():
     """add() должно возникнуть исключение с неправильным типом param."""
     with pytest.raises(TypeError):
         tasks.add(task='not a Task object')
+
 
 def test_start_tasks_db_raises():
     """Убедитесь, что не поддерживаемая БД вызывает исключение."""
@@ -14,3 +16,18 @@ def test_start_tasks_db_raises():
         tasks.start_tasks_db('some/great/path', 'mysql')
     exception_msg = excinfo.value.args[0]
     assert exception_msg == "db_type must be a 'tiny' or 'mongo'"
+
+
+@pytest.mark.smoke
+def test_list_raises():
+    """list() должно возникнуть исключение с неправильным типом param."""
+    with pytest.raises(TypeError):
+        tasks.list_tasks(owner=123)
+
+
+@pytest.mark.get
+@pytest.mark.smoke
+def test_get_raises():
+    """get() должно возникнуть исключение с неправильным типом param."""
+    with pytest.raises(TypeError):
+        tasks.get(task_id='123')
