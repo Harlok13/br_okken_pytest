@@ -11,7 +11,7 @@ def test_add_raises():
 
 
 def test_start_tasks_db_raises():
-    """Убедитесь, что не поддерживаемая БД вызывает исключение."""
+    """Не поддерживаемая БД должна вызывать исключение."""
     with pytest.raises(ValueError) as excinfo:
         tasks.start_tasks_db('some/great/path', 'mysql')
     exception_msg = excinfo.value.args[0]
@@ -31,3 +31,18 @@ def test_get_raises():
     """get() должно возникнуть исключение с неправильным типом param."""
     with pytest.raises(TypeError):
         tasks.get(task_id='123')
+
+
+class TestUpdate:
+    """Тест ожидаемых исключений с tasks.update()."""
+
+    def test_bad_id(self):
+        """non-int id должен поднять exception."""
+        with pytest.raises(TypeError):
+            tasks.update(task_id={'dict instead': 1},
+                         task=tasks.Task())
+
+    def test_bad_task(self):
+        """A non-Task task должен поднять exception."""
+        with pytest.raises(TypeError):
+            tasks.update(task_id=1, task='not a task')

@@ -4,6 +4,7 @@ import pytest
 import tasks
 from tasks import Task
 
+
 def test_add_returns_valid_id():
     """tasks.add(valid task) должен возвращать целое число."""
     # GIVEN an initialized tasks db
@@ -13,6 +14,8 @@ def test_add_returns_valid_id():
     task_id = tasks.add(new_task)
     assert isinstance(task_id, int)
 
+
+@pytest.mark.smoke
 def test_added_task_has_id_set():
     """Убедимся, что поле task_id установлено tasks.add()."""
     # GIVEN an initialized tasks db
@@ -25,3 +28,15 @@ def test_added_task_has_id_set():
 
     # THEN task_id matches id field
     assert task_from_db.id == task_id
+
+
+@pytest.fixture(autouse=True)
+def initialized_tasks_db(tmpdir):
+    """Connect to db before testing, disconnect after."""
+    # Setup : start db
+    tasks.start_tasks_db(str(tmpdir), 'tiny')
+
+    yield  # здесь происходит тестирование
+
+    # Teardown : stop db
+    tasks.stop_tasks_db()
