@@ -24,7 +24,14 @@
 **[`Marking Test Functions`](#marking-test-functions)**\
 **[`Пропуск Тестов`](#пропуск-тестов)**\
 **[`Маркировка тестов ожидающих сбоя`](#маркировка-тестов-ожидающих-сбоя)**\
-**[`Выполнение подмножества тестов`](#выполнение-подмножества-тестов)**
+**[`Выполнение подмножества тестов`](#выполнение-подмножества-тестов)**__:__
+**[`A Single Directory`](#a-single-directory)**__,__
+**[`Одиночный тест`](#одиночный-тест)**__,__
+**[`Одиночная тестовая функция`](#одиночная-тестовая-функция)**__,__
+**[`Одиночный Test Class`](#одиночный-test-class)**__,__
+**[`A Single Test Method of a Test Class`](#a-single-test-method-of-a-test-class)**__,__
+**[`Набор тестов на основе базового имени теста`](#набор-тестов-на-основе-базового-имени-теста)**\
+**[`Параметризованное тестирование`](#параметризованное-тестирование)**
 
 ## Запуск тестов:
 
@@ -674,14 +681,12 @@ def test_start_tasks_db_raises():
 исключении является правильным, добавив `excinfo`:
 
 ```python
-    def test_start_tasks_db_raises():
-
-
-    """Убедитесь, что не поддерживаемая БД вызывает исключение."""
-with pytest.raises(ValueError) as excinfo:
-    tasks.start_tasks_db('some/great/path', 'mysql')
-exception_msg = excinfo.value.args[0]
-assert exception_msg == "db_type must be a 'tiny' or 'mongo'"
+def test_start_tasks_db_raises():
+    """Не поддерживаемая БД должна вызывать исключение."""
+    with pytest.raises(ValueError) as excinfo:
+        tasks.start_tasks_db('some/great/path', 'mysql')
+    exception_msg = excinfo.value.args[0]
+    assert exception_msg == "db_type must be a 'tiny' or 'mongo'"
 ```
 
 Имя переменной после as (в данном случае `excinfo`) заполняется сведениями
@@ -785,6 +790,7 @@ xfail_strict=true
 
 Чтобы запустить все тесты из одного каталога, нужно использовать каталог
 как параметр для `pytest`:
+
 ```
 (venv33) ...\bopytest-code\code\ch2\tasks_proj>pytest tests\func --tb=no
 ============================= test session starts =============================
@@ -802,11 +808,13 @@ tests\func\test_unique_id_4.py xxX.
 ==== 1 failed, 44 passed, 2 skipped, 2 xfailed, 1 xpassed in 1.75 seconds =====
 ```
 
-#### Одиночный тест 
+#### Одиночный тест
+
 **File/Module**
 
 Чтобы запустить файл, полный тестов, нужно перечислить файл с относительным
 путем в качестве параметра к `pytest`:
+
 ```
 $ cd /path/to/code/ch2/tasks_proj
 $ pytest tests/func/test_add.py
@@ -816,8 +824,10 @@ collected 2 items   tests/func/test_add.py ..
 ```
 
 #### Одиночная тестовая функция
+
 Чтобы запустить одну тестовую функцию, нужно добавить `::` и имя тестовой
 функции:
+
 ```
 $ cd /path/to/code/ch2/tasks_proj
 $ pytest -v tests/func/test_add.py::test_add_returns_valid_id
@@ -826,8 +836,88 @@ collected 3 items
 tests/func/test_add.py::test_add_returns_valid_id PASSED
 ======================== 1 passed in 0.02 seconds =========================
 ```
+
 `-v` позволяет увидеть, какая функция была запущена.
 
 #### Одиночный Test Class
+
 Тестовые классы — это способ группировать тесты, которые по смыслу
 группируются вместе.
+
+```python
+class TestUpdate():
+    """Тест ожидаемых исключений с tasks.update()."""
+
+    def test_bad_id(self):
+        """non-int id должен поднять excption."""
+        with pytest.raises(TypeError):
+            tasks.update(task_id={'dict instead': 1},
+                         task=tasks.Task())
+    
+    def test_bad_task(self):
+        """A non-Task task должен поднять excption."""
+        with pytest.raises(TypeError):
+            tasks.update(task_id=1, task='not a task')
+```
+Чтобы запустить только этот класс, нужно добавить `::`, затем имя класса
+в параметр вызова:
+```
+(venv33) ...\bopytest-code\code\ch2\tasks_proj>pytest -v tests/func/test_api_exceptions.py::TestUpdate
+============================= test session starts =============================
+
+collected 2 items
+
+tests\func\test_api_exceptions.py::TestUpdate::test_bad_id PASSED
+tests\func\test_api_exceptions.py::TestUpdate::test_bad_task PASSED
+
+========================== 2 passed in 0.12 seconds ===========================
+```
+#### A Single Test Method of a Test Class
+
+Если не нужно запускать весь тестовый класс, а только один метод — просто можно
+добавить ещё раз `::` и имя метода:
+```
+$ cd /path/to/code/ch2/tasks_proj
+$ pytest -v tests/func/test_api_exceptions.py::TestUpdate::test_bad_id
+===================== test session starts ======================
+collected 1 item
+tests/func/test_api_exceptions.py::TestUpdate::test_bad_id PASSED
+=================== 1 passed in 0.03 seconds ===================
+```
+#### Набор тестов на основе базового имени теста
+Параметр `-k` позволяет передать выражение для выполнения тестов, имена которых
+заданы выражением в качестве подстроки имени теста. Для создания сложных
+выражений можно использовать `and`, `or` и `not` в выражении. Например, мы можем
+запустить все функции с именем `_raises`:
+```
+(venv33) ...\bopytest-code\code\ch2\tasks_proj>pytest -v -k _raises                                
+============================= test session starts =============================                        
+
+collected 56 items                                                                                     
+
+tests/func/test_api_exceptions.py::test_add_raises PASSED                                              
+tests/func/test_api_exceptions.py::test_list_raises PASSED                                             
+tests/func/test_api_exceptions.py::test_get_raises PASSED                                              
+tests/func/test_api_exceptions.py::test_delete_raises PASSED                                           
+tests/func/test_api_exceptions.py::test_start_tasks_db_raises PASSED                                   
+
+============================= 51 tests deselected =============================                        
+=================== 5 passed, 51 deselected in 0.54 seconds =================== 
+```
+Мы можем использовать `and` и `not` что бы исключить `test_delete_raises() `
+из сессии:
+```
+(venv33) ...\bopytest-code\code\ch2\tasks_proj>pytest -v -k "_raises and not delete"
+============================= test session starts =============================
+
+collected 56 items
+
+tests/func/test_api_exceptions.py::test_add_raises PASSED
+tests/func/test_api_exceptions.py::test_list_raises PASSED
+tests/func/test_api_exceptions.py::test_get_raises PASSED
+tests/func/test_api_exceptions.py::test_start_tasks_db_raises PASSED
+
+============================= 52 tests deselected =============================
+=================== 4 passed, 52 deselected in 0.44 seconds ===================
+```
+## Параметризованное тестирование
