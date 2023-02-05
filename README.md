@@ -72,7 +72,7 @@
 Указать файл напрямую и добавить `::test_name`\
 `$ pytest -v tasks/test_four.py::test_asdict`
 
-[К оглавлению](#)
+[К оглавлению](#по-книге-briann-okken--python-testing-with-pytest)
 ## Какими должны быть названия, чтобы pytest обнаруживал тесты:
 
 - Тестовые файлы должны быть названы `test_<something>.py` или `<something>_test.py`.
