@@ -59,7 +59,7 @@ def list_tasks(owner=None):  # type: (str|None) -> list of Task
     return [Task(**t) for t in _tasksdb.list_tasks(owner)]
 
 
-def count():  # type: (None) -> int
+def count():  # type: () -> int
     """Return the number of tasks in db."""
     if _tasksdb is None:
         raise UninitializedDatabase()
