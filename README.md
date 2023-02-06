@@ -38,11 +38,12 @@
 **[`Набор тестов на основе базового имени теста`](#набор-тестов-на-основе-базового-имени-теста)**
 
 **[`Параметризованное тестирование`](#параметризованное-тестирование)**__:__\
-**[`Параметризация с одним параметром`](#параметризация-с одним-параметром)**__,__\
+**[`Параметризация с одним параметром`](#параметризация-с-одним-параметром)**__,__\
 **[`Параметризация с несколькими параметрами`](#параметризация-с-несколькими-параметрами)**__,__
 
 ___
-### Краткое описание:
+
+# Краткое описание:
 
 Здесь собраны мои заметки по книге Brian Okken - Python Testing with pytest.
 Для тех, кто знает `pytest` или прочитал эту замечательную книгу - данный файл
@@ -52,6 +53,7 @@ ___
 Для быстрого ориентирования в каждом разделе предусмотрена ссылка,
 возвращающая к оглавлению.
 ___
+
 ## Запуск тестов:
 
 Весь путь в примерах указывается относительно текущего местоположения\
@@ -71,7 +73,7 @@ ___
 - Одиночные тесты. [Читать подробнее](#одиночный-тест)
 - Одиночные классы. [Читать подробнее](#одиночный-test-class)
 - Одиночные функции из класса. [Читать подробнее](#a-single-test-method-of-a-test-class)
-- Одиночные функции. Указать файл напрямую и добавить `::test_name::test_func`
+- Одиночные функции. [Читать подробнее](#одиночная-тестовая-функция)
 - Одиночные параметры у параметризованной функции. [Читать подробнее](#параметризация-с-несколькими-параметрами)
 - Набор тестов на основе базового имени теста. [Читать подробнее](#набор-тестов-на-основе-базового-имени-теста)
 - Набор тестов на основе маркеров. [Читать подробнее](#marking-test-functions)
@@ -1113,7 +1115,8 @@ test_add_variety.py::test_add_3[sleep-None-False] PASSED                 [100%]
 ========================== 1 passed in 0.22 seconds ===========================
 ```
 
-Обязательно нужно использовать кавычки, если в идентификаторе есть пробелы:
+Обязательно нужно использовать кавычки, если в идентификаторе есть пробелы:\
+`(venv35) c:\BOOK\bopytest-code\code\ch2\tasks_proj\tests\func>pytest -v "test_add_variety.py::test_add_3[eat eggs-BrIaN-False]"`
 
 ```
 (venv35) c:\BOOK\bopytest-code\code\ch2\tasks_proj\tests\func>pytest -v "test_add_variety.py::test_add_3[eat eggs-BrIaN-False]" 
@@ -1125,5 +1128,183 @@ test_add_variety.py::test_add_3[eat eggs-BrIaN-False] PASSED             [100%]
 
 ========================== 1 passed in 0.56 seconds ===========================
 ```
+
+[К оглавлению](#по-книге-briann-okken-python-testing-with-pytest)
+
+#### Параметризация переменной:
+
+Переместим список задач в переменную вне функции
+
+```python
+tasks_to_try = (Task('sleep', done=True),
+                Task('wake', 'brian'),
+                Task('wake', 'brian'),
+                Task('breathe', 'BRIAN', True),
+                Task('exercise', 'BrIaN', False))
+
+
+@pytest.mark.parametrize('task', tasks_to_try)
+def test_add_4(task):
+    """Немного разные."""
+    task_id = tasks.add(task)
+    t_from_db = tasks.get(task_id)
+    assert equivalent(t_from_db, task)
+```
+
+Это удобно и код выглядит красиво. Но читаемость вывода трудно
+интерпретировать:
+
+```
+(venv35) ...\bopytest-code\code\ch2\tasks_proj\tests\func>pytest -v test_add_variety.py::test_add_4
+============================= test session starts =============================
+
+collected 5 items
+
+test_add_variety.py::test_add_4[task0] PASSED                            [ 20%]
+test_add_variety.py::test_add_4[task1] PASSED                            [ 40%]
+test_add_variety.py::test_add_4[task2] PASSED                            [ 60%]
+test_add_variety.py::test_add_4[task3] PASSED                            [ 80%]
+test_add_variety.py::test_add_4[task4] PASSED                            [100%]
+
+========================== 5 passed in 0.34 seconds ===========================
+```
+
+[К оглавлению](#по-книге-briann-okken-python-testing-with-pytest)
+
+#### Параметр ids для parametrize:
+
+Удобочитаемость версии с несколькими параметрами хороша, как и список
+объектов задачи. Чтобы пойти на компромисс, мы можем использовать
+необязательный параметр `ids` для `parametrize()`, чтобы сделать наши
+собственные идентификаторы для каждого набора данных задачи. Параметр
+`ids` должен быть списком строк той же длины, что и количество наборов
+данных. Однако, поскольку мы присвоили нашему набору данных имя переменной
+`tasks_to_try`, мы можем использовать его для генерации идентификаторов:
+
+```python
+task_ids = [f'Task({t.summary}, {t.owner}, {t.done})'
+            for t in tasks_to_try]
+
+
+@pytest.mark.parametrize('task', tasks_to_try, ids=task_ids)
+def test_add_5(task):
+    """Demonstrate ids."""
+    task_id = tasks.add(task)
+    t_from_db = tasks.get(task_id)
+    assert equivalent(t_from_db, task)
+```
+
+Посмотрим, как это выглядит:
+
+```
+(venv33) ...\bopytest-code\code\ch2\tasks_proj\tests\func>pytest -v test_add_variety.py::test_add_5
+============================= test session starts =============================
+
+collected 5 items
+
+test_add_variety.py::test_add_5[Task(sleep,None,True)] PASSED
+test_add_variety.py::test_add_5[Task(wake,brian,False)0] PASSED
+test_add_variety.py::test_add_5[Task(wake,brian,False)1] PASSED
+test_add_variety.py::test_add_5[Task(breathe,BRIAN,True)] PASSED
+test_add_variety.py::test_add_5[Task(exercise,BrIaN,False)] PASSED
+
+========================== 5 passed in 0.45 seconds ===========================
+```
+
+И эти идентификаторы можно использовать для выполнения тестов:\
+`(venv33) ...\bopytest-code\code\ch2\tasks_proj\tests\func>pytest -v "test_add_variety.py::test_add_5[Task(exercise,BrIaN,False)]"`
+
+```
+(venv33) ...\bopytest-code\code\ch2\tasks_proj\tests\func>pytest -v "test_add_variety.py::test_add_5[Task(exercise,BrIaN,False)]"
+============================= test session starts =============================
+
+collected 1 item
+
+test_add_variety.py::test_add_5[Task(exercise,BrIaN,False)] PASSED
+
+========================== 1 passed in 0.21 seconds ===========================
+```
+
+Нам определенно нужны кавычки для этих идентификаторов; в противном
+случае круглые и квадратные скобки будут путать `shell`.
+
+[К оглавлению](#по-книге-briann-okken-python-testing-with-pytest)
+
+#### Параметризация в классах:
+
+Одни и те же наборы данных будут отправлены всем методам теста в классе:
+
+```python
+@pytest.mark.parametrize('task', tasks_to_try, ids=task_ids)
+class TestAdd():
+    """Демонстрация параметризации тестовых классов."""
+
+    def test_equivalent(self, task):
+        """Похожий тест, только внутри класса."""
+        task_id = tasks.add(task)
+        t_from_db = tasks.get(task_id)
+        assert equivalent(t_from_db, task)
+
+    def test_valid_id(self, task):
+        """Мы можем использовать одни и те же данные или несколько тестов."""
+        task_id = tasks.add(task)
+        t_from_db = tasks.get(task_id)
+        assert t_from_db.id == task_id
+```
+
+Результат работы:
+
+```
+(venv33) ...\bopytest-code\code\ch2\tasks_proj\tests\func>pytest -v test_add_variety.py::TestAdd
+============================= test session starts =============================
+
+collected 10 items
+
+test_add_variety.py::TestAdd::test_equivalent[Task(sleep,None,True)] PASSED
+test_add_variety.py::TestAdd::test_equivalent[Task(wake,brian,False)0] PASSED
+test_add_variety.py::TestAdd::test_equivalent[Task(wake,brian,False)1] PASSED
+test_add_variety.py::TestAdd::test_equivalent[Task(breathe,BRIAN,True)] PASSED
+test_add_variety.py::TestAdd::test_equivalent[Task(exercise,BrIaN,False)] PASSED
+test_add_variety.py::TestAdd::test_valid_id[Task(sleep,None,True)] PASSED
+test_add_variety.py::TestAdd::test_valid_id[Task(wake,brian,False)0] PASSED
+test_add_variety.py::TestAdd::test_valid_id[Task(wake,brian,False)1] PASSED
+test_add_variety.py::TestAdd::test_valid_id[Task(breathe,BRIAN,True)] PASSED
+test_add_variety.py::TestAdd::test_valid_id[Task(exercise,BrIaN,False)] PASSED
+
+========================== 10 passed in 1.16 seconds ==========================
+```
+
+[К оглавлению](#по-книге-briann-okken-python-testing-with-pytest)
+
+#### Идентификация параметров
+
+???
+
+## Fixtures
+Fixtures — это функции, выполняемые `pytest` до (а иногда и после) 
+фактических тестовых функций.
+
+**Где используется:**
+- Получить набор данных для тестирования.
+- Получить систему в известном состоянии перед запуском теста.
+- Получить данные для нескольких тестов.
+
+Простой пример фикстуры, который возвращает число:
+```python
+    import pytest
+
+    @pytest.fixture()
+    def some_data():
+        """Return answer to ultimate question."""
+        return 42
+
+    def test_some_data(some_data):
+        """Use fixture return value in a test."""
+        assert some_data == 42
+```
+
+
+
+
 
 
