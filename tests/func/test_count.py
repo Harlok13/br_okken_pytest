@@ -47,13 +47,3 @@ def test_count_of_not_empty_db(task):
     assert tasks_db == expected_count
 
 
-@pytest.fixture(autouse=True)
-def initialized_tasks_db(tmpdir):
-    """Connect to db before testing, disconnect after."""
-    # Setup : start db
-    tasks.start_tasks_db(str(tmpdir), 'tiny')
-
-    yield  # здесь происходит тестирование
-
-    # Teardown : stop db
-    tasks.stop_tasks_db()

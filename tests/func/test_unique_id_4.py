@@ -38,13 +38,4 @@ def test_unique_id_not_a_duck():
     assert uid != 'a duck'
 
 
-@pytest.fixture(autouse=True)
-def initialized_tasks_db(tmpdir):
-    """Connect to db before testing, disconnect after."""
-    # Setup : start db
-    tasks.start_tasks_db(str(tmpdir), 'tiny')
 
-    yield  # здесь происходит тестирование
-
-    # Teardown : stop db
-    tasks.stop_tasks_db()

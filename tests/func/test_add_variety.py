@@ -92,9 +92,4 @@ class TestAdd:
         assert t_from_db.id == task_id
 
 
-@pytest.fixture(autouse=True)
-def initialized_tasks_db(tmpdir):
-    """Подключает к БД перед тестированием, отключает после."""
-    tasks.start_tasks_db(str(tmpdir), 'tiny')
-    yield
-    tasks.stop_tasks_db()
+
