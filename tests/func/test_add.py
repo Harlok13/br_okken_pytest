@@ -30,3 +30,10 @@ def test_added_task_has_id_set():
     assert task_from_db.id == task_id
 
 
+def test_add_increases_count(db_with_3_tasks):
+    """Test tasks.add() должен повлиять на task.count()."""
+    # GIVEN db с 3 задачами
+    # WHEN добавляется еще одна задача
+
+    # THEN счетчик увеличивается на 1
+    assert tasks.coint() == 4
