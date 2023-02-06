@@ -64,6 +64,8 @@ ___
 локальными ссылками в разделах.\
 Для быстрого ориентирования в каждом разделе предусмотрена ссылка,
 возвращающая к оглавлению.
+
+![](src/br_okken_pytest.png)
 ___
 
 ## Запуск тестов:
@@ -1362,6 +1364,7 @@ import pytest
 import tasks
 from tasks import Task
 
+
 @pytest.fixture()
 def tasks_db(tmpdir):
     """Подключение к БД перед тестами, отключение после."""
@@ -1385,7 +1388,7 @@ def tasks_db(tmpdir):
 
 #### Трассировка Fixture Execution с setup show:
 
-Если запустить тест без указания --setup-show, то мы не увидим результат
+Если запустить тест без указания `--setup-show`, то мы не увидим результат
 работы фикстуры:
 
 ```
@@ -1400,7 +1403,7 @@ test_add.py::test_add_returns_valid_id PASSED
 ============ 1 passed, 2 deselected in 0.02 seconds ============
 ```
 
-Тот же самый тест, но уже с --setup-show:
+Тот же самый тест, но уже с `--setup-show`:
 
 ```
 $ pytest  --setup-show  test_add.py -k valid_id
@@ -1442,6 +1445,7 @@ TEARDOWN S tmpdir_factory
 def a_tuple():
     """Вернуть что-нибудь более интересное"""
     return (1, 'foo', None, {'bar': 23})
+
 
 def test_a_tuple(a_tuple):
     """Demo the a_tuple fixture."""
