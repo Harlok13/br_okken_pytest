@@ -1513,3 +1513,165 @@ test_fixtures.py:21: AssertionError
 
 #### Использование Multiple Fixtures:
 
+Можно использовать специализированные фикстуры для непустых бд:
+```python
+# Памятка об интерфейсе Task constructor
+# Task(summary=None, owner=None, done=False, id=None)
+# summary то что требуется
+# owner и done являются необязательными
+# id задается базой данных
+
+@pytest.fixture()
+def tasks_just_a_few():
+    """Все резюме и владельцы уникальны."""
+    return (
+        Task('Write some code', 'Brian', True),
+        Task("Code review Brian's code", 'Katie', False),
+        Task('Fix what Brian did', 'Michelle', False))
+
+@pytest.fixture()
+def tasks_mult_per_owner():
+    """Несколько владельцев с несколькими задачами каждый."""
+    return (
+        Task('Make a cookie', 'Raphael'),
+        Task('Use an emoji', 'Raphael'),
+        Task('Move to Berlin', 'Raphael'),
+
+        Task('Create', 'Michelle'),
+        Task('Inspire', 'Michelle'),
+        Task('Encourage', 'Michelle'),
+
+        Task('Do a handstand', 'Daniel'),
+        Task('Write some books', 'Daniel'),
+        Task('Eat ice cream', 'Daniel'))
+
+@pytest.fixture()
+def db_with_3_tasks(tasks_db, tasks_just_a_few):
+    """Подключение БД с 3 задачами, все уникальны."""
+    for t in tasks_just_a_few:
+        tasks.add(t)
+
+@pytest.fixture()
+def db_with_multi_per_owner(tasks_db, tasks_mult_per_owner):
+    """Подключение БД с 9 задачами, 3 owners, с 3 задачами у каждого."""
+    for t in tasks_mult_per_owner:
+        tasks.add(t)
+```
+Все эти `fixtures` включают две фикстуры в свой список параметров: `tasks_db`
+и набор данных. Набор данных используется для добавления задач в базу данных.
+Теперь тесты могут использовать их, если нужно, чтобы тест начинался
+с непустой базы данных.\
+Например:
+```python
+def test_add_increases_count(db_with_3_tasks):
+    """Test tasks.add() должен повлиять на tasks.count()."""
+    #  GIVEN db с 3 задачами
+    #  WHEN добавляется еще одна задача
+    tasks.add(Task('throw a party'))
+
+    #  THEN счетчик увеличивается на 1
+    assert tasks.count() == 4
+```
+Это также демонстрирует одну из главных причин использования `fixtures`: 
+чтобы сфокусировать тест на том, что вы на самом деле тестируете, а не
+на том, что вы должны были сделать, чтобы подготовиться к тесту.
+
+`assert` или `exception` в фикстуре приводит к ошибке (`ERROR`), в то врем
+я как `assert` или `exception` в тестовой функции приводит к ошибке (`FAIL`),
+что играет нам на руку, т.к. мы всегда будем знать, где произошла ошибка.
+
+Если запустить тесты, то увидим это:
+```
+$ cd /path/to/code/ch3/a/tasks_proj/tests/func
+$ pytest --setup-show test_add.py::test_add_increases_count
+
+============================= test session starts =============================
+
+collected 1 item
+
+test_add.py
+SETUP    S tmpdir_factory
+        SETUP    F tmpdir (fixtures used: tmpdir_factory)
+        SETUP    F tasks_db (fixtures used: tmpdir)
+        SETUP    F tasks_just_a_few
+        SETUP    F db_with_3_tasks (fixtures used: tasks_db, tasks_just_a_few)
+        func/test_add.py::test_add_increases_count (fixtures used: db_with_3_tasks, tasks_db, tasks_just_a_few, tmpdir, tmpdir_factory).
+        TEARDOWN F db_with_3_tasks
+        TEARDOWN F tasks_just_a_few
+        TEARDOWN F tasks_db
+        TEARDOWN F tmpdir
+TEARDOWN S tmpdir_factory
+
+========================== 1 passed in 0.20 seconds ===========================
+```
+Получили снова кучу `F`-ов и `S` для функции и области сеанса.
+
+[К оглавлению](#по-книге-briann-okken-python-testing-with-pytest)
+
+#### Спецификация областей Scope Fixture
+
+Фикстуры включают в себя необязательный параметр под названием `scope`,
+который определяет, как часто фикстура получает `setup` и `teardown`.
+Параметр scope для `@pytest.fixture()` может иметь значения функции,
+класса, модуля или сессии. Scope по умолчанию — это функция. Настройки
+`tasks_db` и все фикстуры пока не определяют область. Таким образом, они
+являются функциональными фикстурами.
+
+**Scope может принимать разные значения:**
+- `scope='function'`\
+Выполняется один раз для каждой функции теста. Часть `setup` запускается
+перед каждым тестом с помощью `fixture`. Часть teardown запускается после
+каждого теста с использованием `fixture`. Это область используемая по 
+умолчанию, если параметр scope не указан.
+- `scope='class'`\
+Выполняется один раз для каждого тестового класса, независимо от
+количества тестовых методов в классе.
+- `scope='module'`\
+Выполняется один раз для каждого модуля, независимо от того, сколько
+тестовых функций или методов или других фикстур при использовании модуля.
+- `scope='session'`\
+Выполняется один раз за сеанс. Все методы и функции тестирования,
+использующие фикстуру области сеанса, используют один вызов `setup` и 
+`teardown`.
+
+А теперь демонстрация scope в действии:
+```python
+"""Demo fixture scope."""
+
+import pytest
+
+@pytest.fixture(scope='function')
+def func_scope():
+    """A function scope fixture."""
+
+@pytest.fixture(scope='module')
+def mod_scope():
+    """A module scope fixture."""
+
+@pytest.fixture(scope='session')
+def sess_scope():
+    """A session scope fixture."""
+
+@pytest.fixture(scope='class')
+def class_scope():
+    """A class scope fixture."""
+
+def test_1(sess_scope, mod_scope, func_scope):
+    """Тест с использованием сессий, модулей и функций."""
+
+def test_2(sess_scope, mod_scope, func_scope):
+    """Демонстрация более увлекательна со множеством тестов."""
+
+@pytest.mark.usefixtures('class_scope')
+class TestSomething():
+    """Demo class scope fixtures."""
+
+    def test_3(self):
+        """Test using a class scope fixture."""
+
+    def test_4(self):
+        """Again, multiple tests are more fun."""
+```
+
+
+

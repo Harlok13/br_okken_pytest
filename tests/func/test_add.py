@@ -34,6 +34,7 @@ def test_add_increases_count(db_with_3_tasks):
     """Test tasks.add() должен повлиять на task.count()."""
     # GIVEN db с 3 задачами
     # WHEN добавляется еще одна задача
+    tasks.add(Task('throw a party'))
 
     # THEN счетчик увеличивается на 1
-    assert tasks.coint() == 4
+    assert tasks.count() == 4
