@@ -19,7 +19,7 @@ def test_add_returns_valid_id(initialized_tasks_db):
 def test_added_task_has_id_set():
     """Убедимся, что поле task_id установлено tasks.add()."""
     # GIVEN an initialized tasks db
-    #   AND a new task is added
+    # AND a new task is added
     new_task = Task('sit in chair', owner='me', done=True)
     task_id = tasks.add(new_task)
 
