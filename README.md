@@ -1672,6 +1672,39 @@ class TestSomething():
     def test_4(self):
         """Again, multiple tests are more fun."""
 ```
+Теперь убедимся, что количество вызовов `fixture` и `setup` в паре
+с `teardown` выполняются в зависимости от области:
+```
+$ cd /path/to/code/ch3/
+$ pytest --setup-show test_scope.py
+============================= test session starts =============================
 
+collected 4 items
 
+test_scope.py
+SETUP    S sess_scope
+    SETUP    M mod_scope
+        SETUP    F func_scope
+        test_scope.py::test_1 (fixtures used: func_scope, mod_scope, sess_scope).
+        TEARDOWN F func_scope
+        SETUP    F func_scope
+        test_scope.py::test_2 (fixtures used: func_scope, mod_scope, sess_scope).
+        TEARDOWN F func_scope
+      SETUP    C class_scope
+        test_scope.py::TestSomething::()::test_3 (fixtures used: class_scope).
+        test_scope.py::TestSomething::()::test_4 (fixtures used: class_scope).
+      TEARDOWN C class_scope
+    TEARDOWN M mod_scope
+TEARDOWN S sess_scope
 
+========================== 4 passed in 0.11 seconds ===========================
+```
+Теперь в отчете отображается не только `S` и `F`, но и `C` и `M` для класса и
+модуля.\
+Область(`scope`) задается в определении фикстуры, а не в месте её вызова.
+Тестовые функции, которые используют фикстуру, не контролируют, как часто 
+устанавливается(`SETUP`) и срывается(`TEARDOWN`) фикстура.
+
+Фикстуры могут зависеть только от других фикстур из той же или более 
+расширенной области(scope). function scope fixture также может зависеть 
+от класса, модуля и фикстур области сеанса, но в обратном порядке — никогда.
